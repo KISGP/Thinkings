@@ -1,0 +1,20 @@
+-  [计算机图形学与多媒体-中国计算机学会](https://www.ccf.org.cn/Academic_Evaluation/CGAndMT/)
+	- TVCG  
+	- TCSVT
+	- ICASSP
+- [人工智能-中国计算机学会](https://www.ccf.org.cn/Academic_Evaluation/AI/)
+	- TPAMI
+	- IJCV
+	- CVIU
+	- TAC
+	- TEC
+	- TFS
+	- TNNLS
+	- Applied Intelligence
+	- Neurocomputing
+	- AAAI
+	- NeurIPS
+	- ==CVPR==
+	- ==ICCV==
+	- ==ECCV==
+
