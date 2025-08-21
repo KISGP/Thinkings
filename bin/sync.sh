@@ -13,17 +13,13 @@ EXCLUDE_OPTIONS=(
 
 # --- 脚本执行逻辑 ---
 
-echo "step 1/3: 复制笔记到项目..."
+echo "step 1: 复制笔记到项目..."
 rm -rf "$DEST_CONTENT_DIR"
 rsync -ah --info=progress2 --delete "${EXCLUDE_OPTIONS[@]}" "$SOURCE_CONTENT_DIR/" "$DEST_CONTENT_DIR"
 
-echo "step 2/3: 开始同步..."
+echo "step 2: 开始同步..."
 npx quartz sync --no-pull
 
-echo "step 3/3: 清理目录..."
-rm -rf "$DEST_CONTENT_DIR"
-
 echo "同步成功"
-
 
 # wsl.exe bash -ic "cd /home/kis/quartz && ./bin/sync.sh"
