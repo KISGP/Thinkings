@@ -15,7 +15,7 @@ EXCLUDE_OPTIONS=(
 
 echo "step 1: 复制笔记到项目..."
 rm -rf "$DEST_CONTENT_DIR"
-rsync -ah --info=progress2 --delete "${EXCLUDE_OPTIONS[@]}" "$SOURCE_CONTENT_DIR/" "$DEST_CONTENT_DIR"
+rsync -ah --info=progress2 --delete --ignore-times "${EXCLUDE_OPTIONS[@]}" "$SOURCE_CONTENT_DIR/" "$DEST_CONTENT_DIR"
 
 echo "step 2: 开始同步..."
 npx quartz sync --no-pull
