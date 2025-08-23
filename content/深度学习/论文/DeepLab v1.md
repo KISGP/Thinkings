@@ -7,6 +7,16 @@ favicon: "https://arxiv.org/static/browse/0.3.4/images/icons/favicon-32x32.png"
 aspectRatio: "0"
 ```
 
+```embed
+title: "Semantic Image Segmentation with Deep Convolutional Nets and Fully Connected CRFs"
+image: "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png"
+description: "Deep Convolutional Neural Networks (DCNNs) have recently shown state of the art performance in high level vision tasks, such as image classification and object detection. This work brings together methods from DCNNs and probabilistic graphical models for addressing the task of pixel-level classification (also called \"semantic image segmentation\"). We show that responses at the final layer of DCNNs are not sufficiently localized for accurate object segmentation. This is due to the very invariance properties that make DCNNs good for high level tasks. We overcome this poor localization property of deep networks by combining the responses at the final DCNN layer with a fully connected Conditional Random Field (CRF). Qualitatively, our \"DeepLab\" system is able to localize segment boundaries at a level of accuracy which is beyond previous methods. Quantitatively, our method sets the new state-of-art at the PASCAL VOC-2012 semantic image segmentation task, reaching 71.6% IOU accuracy in the test set. We show how these results can be obtained efficiently: Careful network re-purposing and a novel application of the 'hole' algorithm from the wavelet community allow dense computation of neural net responses at 8 frames per second on a modern GPU."
+url: "https://arxiv.org/abs/1412.7062"
+favicon: "https://arxiv.org/static/browse/0.3.4/images/icons/favicon-32x32.png"
+aspectRatio: "58.333333333333336"
+```
+
+
 # CONVOLUTIONAL NEURAL NETWORKS FOR DENSE IMAGE LABELING
 
 ## 1

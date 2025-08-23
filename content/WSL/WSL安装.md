@@ -12,9 +12,16 @@ wsl --install
 
 ## 1. 获取下载链接
 
-在 [Anaconda](https://www.anaconda.com/) 官网找到下载链接
+```embed
+title: "Advance AI with Open Source | Anaconda"
+image: "https://www.anaconda.com/wp-content/uploads/2025/07/General.png"
+description: "Anaconda is the birthplace of Python data science. We are a movement of data scientists, data-driven enterprises, and open source communities."
+url: "https://www.anaconda.com/"
+favicon: "https://www.anaconda.com/wp-content/uploads/2025/05/cropped-favicon-32x32.png"
+aspectRatio: "56.25"
+```
 
-例如：https://repo.anaconda.com/archive/Anaconda3-2025.06-0-Linux-x86_64.sh
+在官网找到下载链接，例如：https://repo.anaconda.com/archive/Anaconda3-2025.06-0-Linux-x86_64.sh
 
 ![image-20250710174838522](assets/image-20250710174838522.png)
 
