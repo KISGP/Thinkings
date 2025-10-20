@@ -1,0 +1,109 @@
+{
+	"nodes":[
+		{"id":"2935feab53b93ad4","type":"group","x":-960,"y":2480,"width":3870,"height":1840,"label":"Training"},
+		{"id":"b68984478b0e9fd8","type":"text","text":"![|200](assets/20251015223017.png)\n\n输入图像 $x_0$ 和对应的掩码 $y_0$ 输入到**密集提示输入（DHI）+ ControlNet** 构建的一个**共享特征提取器**并编码为 $c_i$ 和 $c_m$。\n\n> - DHI：负责从输入图像和掩码中提取**低层结构信息（形状、轮廓、空间对应）**；\n> - ControlNet：负责学习**高层的语义控制特征（病灶上下文、纹理关联）**；\n\n$c_m$ 直接输入到 Mask-diffusion\n\n$c_i$ 和 $c_m$ 则经过特征融合得到 $c_{mix}$\n\n> 在计算 $c_{mix}$ ​ 时，虽然用到了 $c_m$ ​，但**反向传播的梯度不会流回 $c_m$ ​ 分支**。","x":639,"y":2500,"width":681,"height":450},
+		{"id":"fa5ef45b0ce5eaeb","type":"text","text":"提出孪生扩散模型 (Siamese-Diffusion Model)","x":800,"y":1340,"width":542,"height":111},
+		{"id":"de0da88a805fd2fb","type":"text","text":"- 图像扩散 → 图像质量高，但多样性低；\n    \n- 掩码扩散 → 多样性高，但形态保真度差。","x":800,"y":1060,"width":542,"height":100},
+		{"id":"e220843ee6574603","type":"text","text":"通常用扩散模型解决分割模型的数据稀缺问题，但\n\n*高质量数据集可以用扩散模型生成，但扩散模型的训练需要大量高质量数据集，而目前缺少大量高质量数据集*。\n\n扩散模型本身也有问题\n","x":800,"y":660,"width":542,"height":180},
+		{"id":"0dda0f93ab53a0c0","type":"text","text":"![|300](assets/20251016141142.png)","x":2070,"y":2500,"width":820,"height":460},
+		{"id":"94e8cfee3b4b6e6e","type":"text","text":"\n![](assets/20251014230946.png)\n\n## VQ-VAE\n\n**VQ-VAE** 是 _Vector Quantized Variational Autoencoder_（向量量化变分自编码器）。\n\n它是一种特殊的 **自编码器 (Autoencoder)**，用于把高维图像压缩到低维潜在空间中，同时保持结构和语义特征。\n\n### 结构组成\n\nVQ-VAE 包含三个主要部分：\n\n1. **编码器（Encoder）**  \n    将原始图像 x0x_0x0​ 压缩为连续潜在表示 $z_e$。\n\t\t$$z_e = E(x_0)$$\n\n2. **向量量化（Vector Quantization, VQ）**  \n    将连续的潜在向量 $z_e$ ​ 映射到一个**离散的代码簿 (codebook)** 中最近的向量（类似于查字典），得到量化后的表示 $z_q$ ​。\n    \n    $$z_q = \\text{Quantize}(z_e) = \\arg\\min_{e_i \\in \\mathcal{E}} \\| z_e - e_i \\|_2​$$\n    \n    其中 $\\mathcal{E} = \\{ e_1, e_2, \\dots, e_K \\}$ 是代码簿中 K 个可学习的向量。\n    \n3. **解码器（Decoder, DDD）**  \n    把量化后的潜在向量 $z_q$ ​ 还原成原始图像的近似版本：\n    \n    $$\\hat{x}_0 = D(z_q)$$\n\n---\n\n### 损失函数\n\nVQ-VAE 的训练目标是重建原图：\n\n$$\\mathcal{L}_{\\text{VQ-VAE}} = \\| x_0 - D(z_q) \\|_2^2 + \\| \\text{sg}[z_e] - e \\|_2^2 + \\beta \\| z_e - \\text{sg}[e] \\|_2^2​$$\n\n其中：\n\n- 第一项是重建误差；\n    \n- 第二、三项分别用于训练 codebook 和编码器；\n    \n- “sg” 表示 stop-gradient。\n","x":-240,"y":3220,"width":580,"height":460},
+		{"id":"6a504af760d1cce4","type":"text","text":"“**密集提示输入（Dense Hint Input, DHI）**” 和 “**ControlNet**” 都是近年来扩散模型中“条件控制”机制的重要方向。\n\n##  为什么需要控制\n\n扩散模型原本生成的是**无条件的随机样本**。即输入一个随机噪声 ($x_T$)，逐步去噪得到图像 ($x_0$)：\n\n$$\nx_{t-1} = f_\\theta(x_t, t)  \n$$\n\n其中没有任何特定“目标”或“语义”控制。\n\n但在医学图像生成中，我们通常希望：“生成**具有特定掩码形态**的病灶图像”；“生成**与输入 CT 图像对应结构一致**但纹理增强的图像”；“生成**遵循某种解剖约束**的组织”。\n\n这就需要在扩散模型中**引入外部条件**，例如掩码、边缘、语义图、深度图或分割结果。\n\n于是出现了两种控制机制：\n\n1. 一种是 **显式引导（如 DHI）**\n2. 一种是 **网络条件化（如 ControlNet）**\n\n## 密集提示输入（Dense Hint Input, DHI）\n\n**Dense Hint Input（密集提示输入）** 是一种**显式的结构引导方式**，它将结构性提示（例如 mask、边缘图、深度图、分割结果）直接以图像通道或特征形式输入到扩散网络中。\n\n$$\n\\epsilon_\\theta(x_t, t, c_\\text{DHI})  \n$$\n\n\n“密集”指的是提示信息与图像具有**逐像素对应关系**，例如：\n\n- 掩码：每个像素是否属于病灶；\n    \n- 边缘：每个像素的边缘强度；\n    \n- 解剖图：每个像素属于哪个器官。\n    \n\n与“稀疏提示”（如文本或类别标签）不同，密集提示为生成模型提供了强结构约束。\n\n## ControlNet：结构条件控制网络\n\n**ControlNet**（Zhang et al., 2023）是针对扩散模型设计的一种**结构化控制模块**，它能在保持主扩散模型权重冻结的情况下，通过一个“控制分支网络”学习如何利用外部结构提示来引导生成。\n\nControlNet 基于一个关键思想：“不改动原有扩散模型（如 Stable Diffusion）的参数”，而是新增一个与其**结构完全相同的网络副本**，  用于处理外部条件（例如边缘、深度、姿态等）。\n\n这个控制网络输出的特征将被加回到原始扩散 U-Net 的中间层中，从而实现**条件对生成的精细引导**。\n\nControlNet 的输入可以是任意结构引导图：掩码，边缘图，深度图，分割结果\n","x":390,"y":3450,"width":538,"height":550},
+		{"id":"3131bfc23110ba78","type":"text","text":"## 那为什么要对 $c_m$ ​ 停止梯度？\n\n### 1. 防止「图像引导分支」反向污染「掩码引导分支」\n\n$c_i$ 来自图像（包含高层语义、纹理特征），$c_m$ 来自掩码（主要是形状、空间分布），$c_{mix}$ 是两者混合的特征\n\n如果训练时让梯度从 $c_{mix}$ 反向同时更新 $c_i$ 和 $c_m$ ​，就会导致掩码分支被强制学习图像纹理信息，从而破坏“掩码引导”的结构独立性。\n\n换句话说，==掩码分支的目标是学**形状**，图像分支的目标是学**纹理**==。如果不阻断梯度，形状信息会被纹理污染。\n### 2. 保证知识迁移方向是 “单向的”\n\n通过对 $c_m$ 停止梯度传播：图像分支的知识（通过 $c_{mix}$ ​）可以影响 U-Net 的共享参数；但掩码分支的参数不会被反向修改，从而保证**迁移是单向的**。\n\n\n也就是说：让图像分支主动指导掩码分支学习，而不是彼此干扰。","x":1030,"y":3465,"width":580,"height":550},
+		{"id":"a0e9122a4a43883f","type":"text","text":"**ZeroModule**，有时也叫 **ZeroConv** 或 **Zero-initialized Module**，是扩散模型中一个**关键**的组件。\n\n它的作用是让新引入的控制分支在训练开始时**不干扰主扩散模型的行为**， 从而实现**稳定训练**和**渐进式条件注入**。\n\n## 1. ZeroModule 是什么\n\n在扩散模型或 ControlNet 结构中，我们常常需要在主干网络（如 U-Net）中**插入额外的控制特征**。 例如：\n\n$$\nh' = h + f(c)  \n$$\n\n其中：\n\n- $h$：U-Net 主干特征；\n    \n- $f(c)$：由控制网络（例如 mask、edge、或 text condition）提取的特征；\n\n\n但问题是：一开始 $f(c)$ 的输出是**随机初始化的**，如果直接相加，可能严重扰乱 U-Net 的初始输出分布，导致训练崩溃。\n\n于是引入 **ZeroModule**（或 ZeroConv），  它的核心思想是：“让控制分支一开始输出全零，让它在训练中**逐渐学习如何介入主干网络**。”\n\n\n\n## 2. 结构定义（以 ZeroConv2d 为例）\n\n在 PyTorch 实现中常见如下定义：\n\n```python\nclass ZeroConv2d(nn.Conv2d):\n    def __init__(self, in_ch, out_ch, kernel_size=1):\n        super().__init__(in_ch, out_ch, kernel_size, padding=kernel_size // 2)\n        nn.init.zeros_(self.weight)\n        nn.init.zeros_(self.bias)\n```\n\n也就是说：**卷积核和偏置全为 0 初始化**；输出一开始恒为 0；之后随着训练逐渐学到合适的权重。\n\n\n因此，在初始阶段：$f(c) = \\text{ZeroConv}(c) = 0$，于是：$h' = h + 0 = h$。模型在训练初期与原始扩散模型输出完全一致，从而保持稳定。\n\n\n\n## 3. 为什么要用 ZeroModule？\n\nZeroModule 的设计初衷来自 ControlNet 论文《Adding Conditional Control to Text-to-Image Diffusion Models》（2023）。 它解决了以下三个核心问题：\n\n### 避免训练初期输出“爆炸”\n\n如果随机初始化控制分支权重， 控制信号可能非常强烈，导致主模型输出分布被破坏（尤其是扩散模型对噪声非常敏感）。  \nZero 初始化保证：初始控制影响为 0，逐步学习控制信号的“强度”。\n\n### 允许在不破坏原模型的前提下“插入控制”\n\n由于 ZeroModule 的初始输出为 0，在训练初期主扩散模型完全等价于原始预训练模型。\n\n这意味着：不需要重新训练整个扩散模型；可以在预训练权重基础上“无缝插入”控制分支；实现“模块化可控生成（plug-and-play control）”。\n\n### 稳定教师–学生结构（如 Siamese-Diffusion）\n\n在 Siamese-Diffusion 中，两个分支共享一个去噪 U-Net。控制信号通过 DHI + ControlNet 注入。\n\n如果这些控制信号在初始阶段过强，会干扰共享参数的学习，造成梯度冲突。ZeroModule 确保控制信号的影响**从 0 开始逐步增加**，从而实现平滑训练过程。","x":1680,"y":3465,"width":480,"height":580},
+		{"id":"85e4d518f8f0d6f1","type":"link","url":"https://openaccess.thecvf.com/content/CVPR2025/html/Qiu_Noise-Consistent_Siamese-Diffusion_for_Medical_Image_Synthesis_and_Segmentation_CVPR_2025_paper.html","x":-600,"y":-33,"width":833,"height":1093},
+		{
+			"id":"c12e8df507549e0c",
+			"type":"text",
+			"text":"$$\n\\mathcal{L}=\\mathcal{L}_{m}+\\mathcal{L}_{i}+\\mathcal{L}_{c}+\\mathcal{L}_{m^{\\prime}}\n$$\n$$\n\\begin{array}{c}\n\\mathcal{L}_{m}=\\mathbb{E}\\left[\\left\\|\\epsilon_{\\theta}^{m}-\\epsilon\\right\\|^{2}\\right], \\epsilon_{\\theta}^{m}=\\epsilon_{\\theta}\\left(z_{t}, t, c_{t}, c_{m}\\right), \\\\\n\\mathcal{L}_{i}=\\mathbb{E}\\left[\\left\\|\\epsilon_{\\theta^{\\prime}}^{m i x}-\\epsilon\\right\\|^{2}\\right], \\epsilon_{\\theta^{\\prime}}^{m i x}=\\epsilon_{\\theta^{\\prime}}\\left(z_{t}, t, c_{t}, c_{m i x}\\right),\\\\\n\\mathcal{L}_{c}=w_c \\cdot \\mathbb{E}\\left[\\left\\|\\epsilon_{\\theta}^{m}-sg[\\epsilon^{mix}_{\\theta^{'}}]\\right\\|^{2}\\right],\\\\\n\\mathcal{L}_{m'} = w_a \\cdot \\mathbb{E}\\Big[ | \\epsilon_{m'}^\\theta - \\epsilon |_2^2 \\Big] \n\\end{array}\n$$\n\n- $\\mathcal{L}_{m}$ 是 Mask diffusion 的噪声预测损失；\n- $\\mathcal{L}_{i}$ 是 Image diffusion 的噪声预测损失；\n- $\\mathcal{L}_{c}$ 是 Noise Consistency Loss；\n- $\\mathcal{L}_{m'}$ 是 Online Augmentation\n\n",
+			"styleAttributes":{
+				"border":null,
+				"shape":null,
+				"textAlign":null
+			},
+			"x":-460,
+			"y":1780,
+			"width":580,
+			"height":360
+		},
+		{"id":"ae1625f40db2944d","type":"text","text":"## **扩散模型（Diffusion Models）**\n\n为了解决标注数据稀缺和隐私问题，**扩散模型**逐渐成为一个有效的工具。这些模型的核心思想是通过模拟噪声添加和去噪的过程生成图像，而生成的图像可以通过与真实图像进行对比，提升模型的鲁棒性和泛化能力。\n\n- **生成图像掩码对**：扩散模型不仅可以生成医学图像，还可以生成与之对应的标签掩码（mask）。这些掩码标识了图像中的病变区域或其他感兴趣的区域，这对于医学图像分割任务至关重要。\n    \n- **数据增强**：由于医学图像数据稀缺，扩散模型通过合成数据来进行数据增强，扩展训练集，缓解数据不足的问题。生成的图像和掩码可以帮助训练分割模型，从而提高分割的准确性和模型的鲁棒性。\n    \n- **解决隐私问题**：生成的合成数据具有隐私保护性质，因为它们不直接来自患者，可以用作训练模型的替代品。这使得研究人员可以在不侵犯隐私的情况下，获得足够的数据进行模型训练。","x":1800,"y":-307,"width":642,"height":407},
+		{"id":"b4acf5b2d5b689b3","type":"text","text":"医学高质量的标注数据集：数量少，成本高，隐私和版权\n","x":800,"y":100,"width":542,"height":60},
+		{"id":"2e9a3e9019ea4c6d","type":"text","text":"## 1. 什么是 Online-Augmentation？\n\nOnline-Augmentation 是指在**模型训练过程中、动态地实时生成增强数据**的方法，而不是事先生成好并保存到磁盘。\n\n也就是说，增强操作（例如旋转、翻转、加噪声等）不是提前做好的，而是在训练循环（training loop）中即时作用在输入样本上的。\n\n\n## 2. 整体思路\n\n> Leveraging the advantages of the Siamese-Diffusion training paradigm, Online-Augmentation is introduced to expand the Mask-Diffusion training set\n\n在训练 Mask-Diffusion 时，不直接用真实样本，而是**在线地从 Image-Diffusion 分支生成新的 z₀′ 样本**。  \n这些样本通过 **Online-Augmentation** 动态扩展 Mask-Diffusion 的训练数据。\n\n\n\n## 3. 生成 $z^′₀$\n\n根据 Image-Diffusion 得到的噪声生成新样本\n\n$$\nz'_0 = \\frac{z_t - \\sqrt{1 - \\bar{\\alpha}_t} \\cdot \\text{sg}\\big[\\epsilon_{\\theta'}^{\\text{mix}}\\big]}{\\sqrt{\\bar{\\alpha}_t}}\n$$\n\n其中：\n\n- $z_t$：是加噪后的 latent 表示；\n    \n- $\\bar{\\alpha}_t$：是扩散过程中第 t 步的累计噪声系数；\n    \n- $\\epsilon_{\\theta'}^{\\text{mix}}$：是由图像扩散模型预测的噪声；\n    \n- $sg[]$：表示 stop-gradient 操作。\n    \n\n## 4. 用 z′₀ 训练\n\n在生成了伪样本 $z^′_0$  后，Mask-Diffusion 就用它来替换原始的 $x_t$。然后进行新的噪声预测：$\\epsilon_{m'}^\\theta = \\epsilon_\\theta (z'_t, t, c_t, c_m)$，并定义新的损失函数：\n\n\n\n$$\n\\mathcal{L}_{m'} = w_a \\cdot \\mathbb{E}\\Big[ | \\epsilon_{m'}^\\theta - \\epsilon |_2^2 \\Big]  \n$$\n\n也就是掩码扩散分支的训练损失。其中：\n\n- $\\epsilon$ 是真实噪声；\n    \n- $\\epsilon_{m'}^\\theta$ 是模型预测噪声；\n    \n- $w_a$ 是一个权重控制项。\n    \n\n## 5. $w_a$ 的控制策略\n\n$$\nw_{a}=\\left\\{\\begin{array}{ll}\n1, & \\text { if } k>K_{\\tau} \\text { and } t<T_{\\tau} \\\\\n0, & \\text { otherwise }\n\\end{array}\\right.\n$$\n\n其中：\n\n- $k$：当前训练迭代次数；\n    \n- $K_\\tau$：迭代阈值；\n    \n- $t$：扩散时间步；\n    \n- $T_\\tau$：时间阈值。\n\n在训练的早期阶段或较大噪声阶段，不使用这种伪样本训练；只有当模型训练到一定程度，且在低噪声阶段时，才启用这种 Online 伪样本增强训练。\n\n> 刚开始模型太不稳定，生成的 $z^′_0$ 质量不高，不适合再训练另一个分支。等模型收敛到一定程度后，才开始让 Mask-Diffusion 学习这些“伪样本”。\n    ","x":2370,"y":3465,"width":520,"height":580},
+		{"id":"c32a295f943520e5","type":"text","text":"## Mask only\n\n**仅掩码模型**的局限性：在图像生成过程中==形态保真度不足==，即**形状和纹理不能真实还原**。\n\n### 1. **仅掩码模型的局限性**\n\n“仅掩码模型”主要关注将生成图像中的病灶区域（如肿瘤、病变区域）与提供的掩码对齐。\n\n生成模型通过参考掩码来生成图像中的病灶区域。然而，单纯依赖掩码进行图像生成时，模型可能陷入**形态保真度低的局部最小值**。\n\n**局部最小值**指的是模型在优化过程中，由于缺乏足够的指导信息，它可能会停留在一个较差的状态（例如生成了形态不准确的病灶），而不是找到一个更好的解决方案，导致生成的图像形态不真实。\n\n### 2. **生成的图像缺失形态特征**\n\n图1(b)中提到的合成医学图像通常忽略了图像中的**不可或缺的形态特征**，例如病灶的**表面纹理**等。这是因为仅依赖掩码来生成图像时，模型过于关注掩码中的病灶区域的轮廓，而忽略了病灶区域的**细节特征**（如纹理、表面结构等）。\n\n### 3. **对分割模型的影响**\n\n生成的图像如果缺乏真实的形态特征，特别是表面纹理等细节信息，会**掩盖分割模型所学习的病灶判别特征**。\n\n具体来说，分割模型是通过学习图像中的特征来进行病灶区域的识别和分割。如果生成的合成图像没有包含真实的纹理或其他病灶特征，分割模型在训练时就无法获得这些有用的特征信息。这会导致分割模型难以**正确解释**和**准确分割**病灶区域，因为模型没有学到病灶的所有关键特征（尤其是表面纹理等），从而**削弱了增强分割模型的可靠性**。\n","x":3120,"y":201,"width":839,"height":740},
+		{"id":"8884a88ce2c52682","type":"text","text":"## Images and masks\n\n通过结合图像和掩码等先验信息，生成模型能够有效提高合成图像的**形态保真度**，使得图像在病灶形状、结构等方面更加逼真，尤其是在医学图像分析中对细节的需求。\n\n副作用是==缺乏足够的多样性==。换句话说，所有生成的图像都可能非常相似，导致**生成模型无法创造足够多样化的图像**来满足模型训练所需的各种数据样本。\n\n合成图像的主要目标之一是通过生成新的样本来弥补数据的稀缺。然而，尽管引入了先验控制来提高图像的形态保真度，**合成图像的可扩展性仍然受到样本对的稀缺性限制**。也就是说，虽然生成模型能生成形态较为真实的图像，但由于样本对（图像-掩码对）的数量有限，生成图像的多样性并没有得到显著提升，反而可能限制了数据的扩展性，未能充分解决数据稀缺的问题。","x":3120,"y":1134,"width":839,"height":317},
+		{"id":"75aacfbd35552c56","type":"text","text":"\n 在扩散模型中，直接在图像空间（如 $256 \\times 256 \\times 3$）进行扩散训练和采样成本极高：\n\n- 图像空间维度太大；\n- 去噪 U-Net 必须处理像素级噪声，学习难度高；\n- 训练显存和计算量都非常大。","x":-880,"y":3220,"width":580,"height":180},
+		{"id":"ef47abaa37f26863","type":"text","text":"![|100](assets/20251015221017.png) \n\n图像 $x_0$ 被 ==VQ‐VAE 编码器== $\\mathcal{E}$ 压缩到潜在空间 $z_0$ 中，这个 $z_0$ 就是**潜在空间 (latent space)** 中的表示。它是对原始图像的**压缩、高级语义描述**。\n\n\n","x":-920,"y":2520,"width":620,"height":270},
+		{"id":"2a7df9ac9e8458d4","type":"file","file":"assets/20251011203544.png","x":1740,"y":500,"width":644,"height":1021},
+		{
+			"id":"7616f7c2c7430804",
+			"type":"text",
+			"text":"Noise Consistency Loss, enabling the noise predicted by Image-Diffusion to act as an additional anchor, steering the convergence trajectory of Mask-Diffusion toward a local minimum with higher morphological fidelity in the parameter space.\n\n> _噪声一致性损失使得由图像扩散预测的噪声能够作为一个额外的锚点，从而引导掩码扩散的收敛轨迹在参数空间中朝向具有更高形态保真度的局部最小值收敛。_\n\n换句话说，噪声一致性损失的作用就是让 Mask-Diffusion 所预测的噪声逐渐靠近 Image-Diffusion 预测的噪声。\n\n目的是让 Mask-Diffusion 分支学会预测与 Image-Diffusion 分支一致的噪声，从而让它在只使用掩码作为输入（采样阶段）时，也能生成形态结构更真实、细节更保真的图像。\n\nWe argue that only synthesized medical images containing essential morphological characteristics can ensure the reliability of enhanced segmentation models.\n\n> _我们认为，只有**包含关键形态特征的合成医学图像**，才能确保**增强后的分割模型的可靠性**。_\n\n换句话说，如果合成图像缺乏真实的形态特征，分割模型即便在这些数据上训练，也不会具备稳定、可信的泛化能力。\n\nImage-Diffusion 优点是真实纹理，Mask-Diffusion 优点是多样性\n\n总结作者认为形态特征的重要性比多样性大，所以让 Mask-Diffusion 所预测的噪声逐渐靠近 Image-Diffusion 预测的噪声，而不是 Image-Diffusion 预测的噪声靠近 Mask-Diffusion 所预测的噪声。即：\n\n$$\n\\mathcal{L}_{c}=w_c \\cdot \\mathbb{E}\\left[\\left\\|\\epsilon_{\\theta}^{m}-sg[\\epsilon^{mix}_{\\theta^{'}}]\\right\\|^{2}\\right]\n$$\n而非\n\n$$\n\\mathcal{L}_{c}=w_c \\cdot \\mathbb{E}\\left[\\left\\|sg[\\epsilon_{\\theta}^{m}]-\\epsilon^{mix}_{\\theta^{'}}\\right\\|^{2}\\right]\n$$\n",
+			"styleAttributes":{},
+			"x":-1640,
+			"y":1520,
+			"width":740,
+			"height":740
+		},
+		{"id":"ffdabc24b7753ed5","type":"file","file":"assets/20251014232402.png","x":540,"y":1720,"width":916,"height":600}
+	],
+	"edges":[
+		{"id":"ed4ab3f4c43d97c3","fromNode":"85e4d518f8f0d6f1","fromSide":"right","toNode":"b4acf5b2d5b689b3","toSide":"left","label":"背景"},
+		{"id":"dcd12bacd8e10627","fromNode":"2a7df9ac9e8458d4","fromSide":"right","toNode":"c32a295f943520e5","toSide":"left","label":"mask缺少保真度"},
+		{"id":"a0d7e6d866dac4c1","fromNode":"85e4d518f8f0d6f1","fromSide":"right","toNode":"e220843ee6574603","toSide":"left","label":"问题"},
+		{"id":"330312bad0703f21","fromNode":"e220843ee6574603","fromSide":"right","toNode":"2a7df9ac9e8458d4","toSide":"left","label":"扩散模型比较"},
+		{"id":"f2ca76b66c6f59bc","fromNode":"ae1625f40db2944d","fromSide":"left","toNode":"e220843ee6574603","toSide":"top"},
+		{"id":"1240adbf0e1fcca1","fromNode":"2a7df9ac9e8458d4","fromSide":"right","toNode":"8884a88ce2c52682","toSide":"left","label":"images+masks提高保真度，但缺少多样性导致生成样本数量不足"},
+		{"id":"9d7ea906f9ce3560","fromNode":"2a7df9ac9e8458d4","fromSide":"left","toNode":"de0da88a805fd2fb","toSide":"right","label":"当前扩散模型缺点"},
+		{"id":"18f7cf81702ccd8c","fromNode":"de0da88a805fd2fb","fromSide":"bottom","toNode":"fa5ef45b0ce5eaeb","toSide":"top"},
+		{"id":"6cea4caf531c36e8","fromNode":"85e4d518f8f0d6f1","fromSide":"right","toNode":"fa5ef45b0ce5eaeb","toSide":"left","label":"解决"},
+		{
+			"id":"3de3192fee967417",
+			"styleAttributes":{},
+			"toFloating":false,
+			"fromNode":"c12e8df507549e0c",
+			"fromSide":"left",
+			"toNode":"7616f7c2c7430804",
+			"toSide":"right",
+			"label":"Noise Consistency Loss"
+		},
+		{"id":"2638d3ab2ab0107e","fromNode":"ef47abaa37f26863","fromSide":"bottom","toNode":"75aacfbd35552c56","toSide":"top","label":"为什么要进入潜在空间？"},
+		{"id":"6e630c04abaf8b2b","fromNode":"ef47abaa37f26863","fromSide":"bottom","toNode":"94e8cfee3b4b6e6e","toSide":"top","label":"VQ-VAE"},
+		{"id":"fa9d243cd82d0b8e","fromNode":"ef47abaa37f26863","fromSide":"right","toNode":"b68984478b0e9fd8","toSide":"left"},
+		{"id":"c4ec7503baeb4cff","fromNode":"b68984478b0e9fd8","fromSide":"bottom","toNode":"6a504af760d1cce4","toSide":"top","label":"DHI 和 ControlNet"},
+		{"id":"f92d443d79f93a76","fromNode":"b68984478b0e9fd8","fromSide":"bottom","toNode":"3131bfc23110ba78","toSide":"top","label":"为什么要停止梯度"},
+		{"id":"4b1e40b025522c13","fromNode":"b68984478b0e9fd8","fromSide":"bottom","toNode":"a0e9122a4a43883f","toSide":"top","label":"Zero"},
+		{"id":"3e5b9dfd21b158e5","fromFloating":false,"fromNode":"b68984478b0e9fd8","fromSide":"right","toNode":"0dda0f93ab53a0c0","toSide":"left"},
+		{
+			"id":"f64ee72634b99768",
+			"toFloating":false,
+			"fromFloating":false,
+			"styleAttributes":{
+				"pathfindingMethod":null
+			},
+			"fromNode":"0dda0f93ab53a0c0",
+			"fromSide":"bottom",
+			"toNode":"2e9a3e9019ea4c6d",
+			"toSide":"top",
+			"label":"Online Augmentation"
+		},
+		{"id":"52344c71973683e8","fromFloating":false,"fromNode":"fa5ef45b0ce5eaeb","fromSide":"bottom","toNode":"ffdabc24b7753ed5","toSide":"top"},
+		{"id":"59121e7e5e0f85fd","fromNode":"ffdabc24b7753ed5","fromSide":"bottom","toNode":"2935feab53b93ad4","toSide":"top"},
+		{
+			"id":"b0661d5ebff78d49",
+			"toFloating":false,
+			"styleAttributes":{
+				"arrow":null
+			},
+			"fromFloating":false,
+			"fromNode":"ffdabc24b7753ed5",
+			"fromSide":"left",
+			"toNode":"c12e8df507549e0c",
+			"toSide":"right",
+			"label":"损失函数"
+		}
+	],
+	"metadata":{
+		"version":"1.0-1.0",
+		"frontmatter":{},
+		"startNode":"e1ca114510e49945"
+	}
+}

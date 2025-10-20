@@ -1,11 +1,3 @@
-```embed
-title: "Semantic Image Segmentation with Deep Convolutional Nets and Fully Connected CRFs"
-image: "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png"
-description: "Deep Convolutional Neural Networks (DCNNs) have recently shown state of the art performance in high level vision tasks, such as image classification and object detection. This work brings together methods from DCNNs and probabilistic graphical models for addressing the task of pixel-level classification (also called \"semantic image segmentation\"). We show that responses at the final layer of DCNNs are not sufficiently localized for accurate object segmentation. This is due to the very invariance properties that make DCNNs good for high level tasks. We overcome this poor localization property of deep networks by combining the responses at the final DCNN layer with a fully connected Conditional Random Field (CRF). Qualitatively, our \"DeepLab\" system is able to localize segment boundaries at a level of accuracy which is beyond previous methods. Quantitatively, our method sets the new state-of-art at the PASCAL VOC-2012 semantic image segmentation task, reaching 71.6% IOU accuracy in the test set. We show how these results can be obtained efficiently: Careful network re-purposing and a novel application of the 'hole' algorithm from the wavelet community allow dense computation of neural net responses at 8 frames per second on a modern GPU."
-url: "https://arxiv.org/abs/1412.7062"
-favicon: "https://arxiv.org/static/browse/0.3.4/images/icons/favicon-32x32.png"
-aspectRatio: "0"
-```
 
 ```embed
 title: "Semantic Image Segmentation with Deep Convolutional Nets and Fully Connected CRFs"
@@ -35,7 +27,6 @@ detection scores 是指**全卷积网络输出的像素级分类分数**。
 ## 2
 
 ![](assets/20250820195147.png)
-
 > We can implement this more efficiently by keeping the filters intact and instead sparsely sample the feature maps on which they are applied on using an input stride of 2 or 4 pixels, respectively. This approach, illustrated in Fig. 1 is known as the ‘hole algorithm’ (‘atrous algorithm’) and has been developed before for efficient computation of the undecimated wavelet transform (Mallat, 1999).
 
 虽然“在卷积核中插入零”是空洞卷积的直观理解，但它不是最快的实现方式。更高效的方式是保持卷积核不变，不要去修改卷积核本身。在应用卷积时，让卷积核**跳跃式地**在输入特征图上进行采样。
@@ -50,12 +41,4 @@ ImageNet 数据集有 1000 个类别，所以 VGG-16 的最后一层（分类器
 
 
 
-# DETAILED BOUNDARY RECOVERY: FULLY-CONNECTED CONDITIONAL  RANDOM FIELDS AND MULTI-SCALE PREDICTION
 
-## 1
-
-> As illustrated in Figure 2, DCNN score maps can reliably predict the presence and rough position of objects in an image but are less well suited for pin-pointing their exact outline. There is a natural trade-off between classification accuracy and localization accuracy with convolutional networks: Deeper models with multiple max-pooling layers have proven most successful in classification tasks, however their increased invariance and large receptive fields make the problem of inferring position from the scores at their top output levels more challenging.
-> 
-> Recent work has pursued two directions to address this **localization challenge**. The first approach is to harness information from multiple layers in the convolutional network in order to better estimate the object boundaries (Long et al., 2014; Eigen & Fergus, 2014). The second approach is to employ a super-pixel representation, essentially delegating the localization task to a low-level segmentation method. This route is followed by the very successful recent method of Mostajabi et al. (2014).
-> 
-> In Section 4.2, we pursue a novel alternative direction based on coupling the recognition capacity of DCNNs and the fine-grained localization accuracy of fully connected CRFs and show that it is remarkably successful in addressing the localization challenge, producing accurate semantic segmentation results and recovering object boundaries at a level of detail that is well beyond the reach of existing methods.

@@ -1,0 +1,41 @@
+{
+	"nodes":[
+		{"id":"c166831d29a3dd55","type":"group","x":-400,"y":400,"width":2608,"height":1775,"label":"RRN"},
+		{"id":"a7fdff64f0ba4788","type":"group","x":3000,"y":-1000,"width":1960,"height":860,"label":"LSTM-CNN"},
+		{"id":"ebeefa34cfcced72","type":"text","text":"多尺度训练和测试是不可行的\n\n简单的多尺度训练和测试策略是无效的, 因为这项任务需要一次性处理整个图像区域以捕捉自然语言所引用的全局信息。","x":254,"y":-60,"width":306,"height":220},
+		{"id":"45333e8d632a4001","type":"text","text":"## 📖 逐节阅读指南\n\n### 1. **Introduction**\n\n- **重点关注**：\n    \n    - 作者提出的问题：为什么 Referring Image Segmentation（RIS）难？（语言-视觉对齐、多尺度、边界粗糙）\n        \n    - 现有方法的不足：\n        \n        - 大多只用 CNN 最后一层特征（缺少多尺度）；\n            \n        - 初始 mask 粗糙，缺乏 refinement。\n            \n    - **论文的主要贡献**：\n        \n        - Recurrent Refinement Network (RRN)；\n            \n        - 多尺度语义特征融合；\n            \n        - 在多个基准数据集上取得新 SOTA。\n            \n\n👉 建议：在看这一节时，圈出“痛点”和“创新点”，这是全文逻辑的起点。\n\n---\n\n### 2. **Related Work**\n\n- **重点关注**：\n    \n    - 语言与视觉融合的早期方法（如 LSTM–CNN）；\n        \n    - Referring Expression Grounding vs. Segmentation 的区别；\n        \n    - 语义分割领域的 **refinement 技术**（如 CRF、迭代更新）。\n        \n\n👉 建议：不用细读所有方法，注意对比关系：\n\n- 以前的“单步预测” vs. 本文的“循环细化”；\n    \n- 以前的“单尺度特征” vs. 本文的“多尺度特征”。\n    \n\n---\n\n### 3. **Method**\n\n这是论文的核心部分，重点要细看。\n\n- **整体框架**：\n    \n    - 图像 → CNN 提取多尺度特征 (feature pyramid)；\n        \n    - 语言 → LSTM 编码；\n        \n    - 初始预测 segmentation mask；\n        \n    - 循环 refinement：mask 与特征反复交互更新。\n        \n- **关键模块**：\n    \n    1. **Multi-scale Feature Extraction**\n        \n        - 看作者用了哪些 CNN 层（如 ResNet 的 res2–res5）；\n            \n        - 如何融合不同层的语义。\n            \n    2. **Language Feature Encoding**\n        \n        - LSTM 输出的隐藏状态作为语言语义向量；\n            \n        - 如何与图像特征融合。\n            \n    3. **Recurrent Refinement Unit**\n        \n        - 核心公式：\n            \n            M(t+1)=f(M(t),Fimg,Ftxt)M^{(t+1)} = f(M^{(t)}, F_{img}, F_{txt})\n        - 注意：这里的循环不是简单的 RNN，而是 mask refinement。\n            \n\n👉 建议：这节要 **画草图** 或 **自己在纸上复现模型框架**，否则容易迷失在公式里。\n\n---\n\n### 4. **Experiments**\n\n- **数据集**：ReferItGame, UNC, UNC+, G-Ref。\n    \n- **对比方法**：和之前的 LSTM–CNN 类方法比较。\n    \n- **指标**：IoU、准确率。\n    \n- **消融实验**：\n    \n    - 不用 recurrent refinement，会怎样？\n        \n    - 不用 multi-scale，会怎样？\n        \n    - 迭代次数对性能的影响。\n        \n\n👉 建议：重点看消融实验，因为它直接证明了 RRN 的两个核心创新（refinement + multi-scale）确实有用。\n\n---\n\n### 5. **Conclusion**\n\n- **总结贡献**：多尺度 + 循环 refinement 的有效性；\n    \n- **未来工作方向**：可能结合更强的语言建模（当时 LSTM，用 Transformer 会更强）。\n    \n\n👉 建议：在 conclusion 里补一句自己思考：  \n“这一工作在 Transformer 时代的扩展可能是 **cross-attention + iterative refinement**，而不是单纯的 LSTM–CNN。”\n\n---\n\n## 🔑 阅读要点总表\n\n- **Introduction**：为什么要做？（问题 & 贡献）\n    \n- **Related Work**：和以前相比，有啥不同？\n    \n- **Method**：核心创新，尤其是 recurrent refinement unit。\n    \n- **Experiments**：看 ablation study（验证创新点是否真的有用）。\n    \n- **Conclusion**：总结 + 未来方向。\n    \n\n---\n\n要不要我帮你整理一份 **读后问题清单**（比如每节读完后你应该能回答什么问题），这样你能更高效地检验自己是否掌握了？","x":-2480,"y":-822,"width":850,"height":880},
+		{"id":"8f71e3dd09f6ff21","type":"text","text":"论文里提到的 **多尺度信息** 是指 **图像在不同空间分辨率层级上所包含的语义特征**。\n\n换句话说，一张图像在卷积神经网络（CNN）逐层处理时，不同深度的特征图具有不同的感受野：\n\n- **浅层特征（low-level features）**：  \n    分辨率较高，保留了大量细节，比如边缘、纹理、局部形状。这类特征对定位目标的边界很有用。\n    \n- **中层特征（mid-level features）**：  \n    兼具空间信息和语义抽象能力，比如局部结构（物体部件、颜色块）。\n    \n- **深层特征（high-level features）**：  \n    分辨率较低，但包含全局上下文和抽象语义（“这是狗”，“这是桌子”）。\n    \n\n### 为什么论文里要强调多尺度信息？\n\n论文讨论的是 **Referring Image Segmentation** —— 给定一段语言描述（例如“坐在椅子上的小狗”），需要在图像里分割出对应的目标。\n\n难点在于：\n\n1. 自然语言里既可能指涉 **局部属性**（“红色的球” → 需要低层特征来分辨颜色/边界），\n    \n2. 也可能涉及 **全局语境**（“离桌子最近的猫” → 需要高层特征来理解整体关系）。\n    \n\n如果只使用 CNN 最后一层（深层）的特征，那就会丢失细节边界，导致分割粗糙。  \n因此，作者强调要利用 **CNN 特征金字塔中天然存在的多尺度语义**，并通过 **循环细化（Recurrent Refinement）** 机制逐步融合不同尺度的信息，使得模型既能捕捉局部细节，又能利用全局上下文。\n\n---\n\n一句话总结：  \n**多尺度信息就是 CNN 在不同层级所提取的从局部细节到全局语义的特征集合。论文利用这些特征来弥补单一尺度表示的不足，从而在 Referring Segmentation 任务中提升精度。**\n","x":1580,"y":-463,"width":571,"height":343},
+		{"id":"dd3bb61242bc5af9","type":"text","text":"作者打算通过==结合多尺度信息==来细化分割结果, 从而生成更高质量的图像掩码。","x":552,"y":-292,"width":515,"height":100},
+		{"id":"8471414cb805a70b","type":"text","text":"作者认为现有方法没有利用**多尺度信息**","x":720,"y":-500,"width":531,"height":54},
+		{"id":"82a11ef45bfd203e","type":"text","text":"现有的分割方法被限制为预测一组预定义的类别。这些方法不满足许多基于语言的现实应用。\n\nSemantic segmentation -> Referring image segmentation\n\nReferring image segmentation 目标：查询的自然语言表达式分割出精确的前景掩码","x":566,"y":-940,"width":654,"height":180},
+		{"id":"2dff27aac432c76e","type":"text","text":"现有方法（LSTM‐CNN）有时无法捕捉整个实体，并且通常产生更粗糙的边缘估计。","x":566,"y":-720,"width":486,"height":80},
+		{"id":"2597bc2b5616b051","type":"text","text":"我们研究了==从自然语言描述中进行图像分割==的问题。现有的基于深度学习的方法根据最后一个卷积层的输出编码图像表示。一个普遍的问题是, 生成的图像表示缺乏多尺度语义, 而多尺度语义是高级分割系统的关键组成部分。在本文中, 我们利用卷积神经网络中固有的特征金字塔来捕获不同尺度的语义。为了通过特征层次结构路径产生合适的信息流,我们提出了循环细化网络 (RRN), 该网络将金字塔特征作为输入, 以逐步细化分割掩码。在四个可用数据集上的实验结果表明, 我们的方法优于多个基线和当前最优方法 。","x":-800,"y":-160,"width":880,"height":159},
+		{"id":"1207807a6c81a9c9","type":"link","url":"https://openaccess.thecvf.com/content_cvpr_2018/html/Li_Referring_Image_Segmentation_CVPR_2018_paper.html","x":-800,"y":-1080,"width":880,"height":888},
+		{"id":"8e81474c2ce2e65e","type":"text","text":"提出了循环细化网络 \n\n(RRN, Recurrent Refinement Network)","x":760,"y":-60,"width":360,"height":100},
+		{"id":"0dd4bba8703b0909","type":"file","file":"assets/20250925235002.png","x":1660,"y":-1040,"width":360,"height":439,"color":"5"},
+		{"id":"358d6e9635c4e27a","type":"link","url":"https://arxiv.org/abs/1603.06180","x":3820,"y":-570,"width":1080,"height":410},
+		{"id":"689514de382d1f66","type":"text","text":"和 RRN 的区别：\n1. CNN 模块使用的是 VGG-16 ，RRN 是 DeepLab\n2. 后面使用上采样，RRN 是 ConvLSTM","x":3040,"y":-300,"width":745,"height":140},
+		{"id":"8f7b39f520ee4a05","type":"file","file":"assets/LSTM-CNN.png","x":3040,"y":-760,"width":745,"height":420},
+		{"id":"9b999a0dca22e46c","type":"file","file":"assets/RRN.png","x":-292,"y":495,"width":1259,"height":600},
+		{"id":"cb67d9d0018bcee0","type":"file","file":"深度学习/论文/CVPR/2018/Referring Image Segmentation via Recurrent Refinement Networks.md","x":2400,"y":795,"width":2240,"height":1380},
+		{"id":"32edcab5859b6862","type":"file","file":"assets/20250926122506.png","x":3820,"y":-960,"width":1079,"height":361},
+		{"id":"a7ae42d5f1138fdb","type":"file","file":"assets/20250927224409.png","x":-292,"y":1640,"width":901,"height":460},
+		{"id":"1d0648267b7dd42b","type":"file","file":"assets/20250926133851.png","x":800,"y":1640,"width":1324,"height":460}
+	],
+	"edges":[
+		{"id":"7d73a2160a93f56e","fromNode":"2dff27aac432c76e","fromSide":"bottom","toNode":"8471414cb805a70b","toSide":"top","label":"原因"},
+		{"id":"adc958076bbdfa01","fromNode":"8471414cb805a70b","fromSide":"bottom","toNode":"dd3bb61242bc5af9","toSide":"top"},
+		{"id":"476a811ffbbd810b","fromNode":"dd3bb61242bc5af9","fromSide":"bottom","toNode":"8e81474c2ce2e65e","toSide":"top"},
+		{"id":"31e4ba1e7c8c6d72","fromNode":"ebeefa34cfcced72","fromSide":"right","toNode":"8e81474c2ce2e65e","toSide":"left"},
+		{"id":"6346600328d940ab","fromNode":"1207807a6c81a9c9","fromSide":"right","toNode":"82a11ef45bfd203e","toSide":"left","label":"背景"},
+		{"id":"4b5f7c87f7bbb535","fromNode":"1207807a6c81a9c9","fromSide":"right","toNode":"2dff27aac432c76e","toSide":"left","label":"发现问题"},
+		{"id":"301877e9a0345219","fromNode":"1207807a6c81a9c9","fromSide":"right","toNode":"dd3bb61242bc5af9","toSide":"left","label":"解决问题"},
+		{"id":"5219d03decfeae75","fromNode":"8f71e3dd09f6ff21","fromSide":"left","toNode":"8471414cb805a70b","toSide":"right"},
+		{"id":"2d2c528ebf49167f","fromNode":"0dd4bba8703b0909","fromSide":"left","toNode":"2dff27aac432c76e","toSide":"right"},
+		{"id":"b42f5b189c9fd6e6","fromNode":"32edcab5859b6862","fromSide":"left","toNode":"8f7b39f520ee4a05","toSide":"top"},
+		{"id":"9734ee8471fc6198","fromNode":"0dd4bba8703b0909","fromSide":"right","toNode":"a7fdff64f0ba4788","toSide":"left"},
+		{"id":"adf40fdda1939d25","fromNode":"8e81474c2ce2e65e","fromSide":"bottom","toNode":"c166831d29a3dd55","toSide":"top"},
+		{"id":"c674786e68e2b6b4","fromNode":"a7fdff64f0ba4788","fromSide":"bottom","toNode":"9b999a0dca22e46c","toSide":"right"},
+		{"id":"f432af18ee315702","fromNode":"9b999a0dca22e46c","fromSide":"right","toNode":"cb67d9d0018bcee0","toSide":"left"}
+	]
+}

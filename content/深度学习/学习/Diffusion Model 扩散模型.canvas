@@ -1,0 +1,21 @@
+{
+	"nodes":[
+		{"id":"39a30ded1a0e3c13","type":"file","file":"assets/20251012222636.png","x":-540,"y":-340,"width":491,"height":260},
+		{"id":"a80d08d96825f881","type":"file","file":"assets/20251012222704.png","x":-49,"y":-340,"width":513,"height":260},
+		{"id":"824d9cdbaa5d4014","type":"file","file":"assets/20251012223435.png","x":-540,"y":-20,"width":491,"height":274},
+		{"id":"17c0c3138a77ce52","type":"file","file":"assets/20251012223454.png","x":-49,"y":-20,"width":516,"height":274},
+		{"id":"bea79ecf6f2cd50b","type":"file","file":"assets/20251012223536.png","x":467,"y":-20,"width":515,"height":274},
+		{"id":"c3926b363408be31","type":"link","url":"https://www.bilibili.com/video/BV1xih7ecEMb","x":-540,"y":-800,"width":720,"height":400},
+		{"id":"9c5f87e5b54ec33e","type":"file","file":"assets/20251012224109.png","x":-540,"y":300,"width":491,"height":264},
+		{"id":"c2e22272ddfbb2dc","type":"file","file":"assets/20251012224419.png","x":-540,"y":600,"width":491,"height":266},
+		{"id":"ffc9d9be1016dbc3","type":"file","file":"assets/20251012224455.png","x":-49,"y":600,"width":492,"height":266},
+		{"id":"be807b363757d501","type":"file","file":"assets/20251012224523.png","x":-540,"y":900,"width":490,"height":271},
+		{"id":"e8996310b3954987","type":"file","file":"assets/20251012224541.png","x":-540,"y":1200,"width":491,"height":271},
+		{"id":"686d2df45ad3e036","type":"file","file":"assets/20251012224558.png","x":-49,"y":1200,"width":490,"height":271},
+		{"id":"27b588eaa46fce0c","type":"file","file":"assets/20251012224616.png","x":-540,"y":1500,"width":491,"height":267},
+		{"id":"aba3632a21385b8b","type":"file","file":"assets/20251012224637.png","x":-540,"y":1800,"width":490,"height":264},
+		{"id":"d82707dc655cf662","type":"file","file":"assets/20251012224719.png","x":-540,"y":2100,"width":491,"height":276},
+		{"id":"a90ac54bb2df5a55","x":1320,"y":-800,"width":1800,"height":3176,"type":"link","url":"https://codoraven.com/blog/ai/stable-diffusion-clearly-explained"}
+	],
+	"edges":[]
+}
